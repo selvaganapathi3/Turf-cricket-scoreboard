@@ -105,11 +105,10 @@ body {
 .app { position: relative; z-index: 1; max-width: 460px; height: 100vh; height: 100dvh; overflow-y: auto; margin: 0 auto; display: flex; flex-direction: column; }
 .app > * { flex-shrink: 0; }
 #matchView { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
-#matchView > .hero-wrap, #matchView > .strip, #matchView > .tray { flex-shrink: 0; }
-.xs-only { display: none; }
+#matchView > .hero-wrap, #matchView > .tray { flex-shrink: 0; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 button, label { touch-action: manipulation; }
-.keys, .chips, .score { -webkit-user-select: none; user-select: none; }
+.keys, .chips, .score { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .hidden { display: none !important; }
 
 button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
@@ -160,24 +159,18 @@ header h1 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.5px;
 .bar { height: 10px; border-radius: 999px; background: rgba(255,255,255,.22); overflow: hidden; }
 .bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #fde047, #a3e635); transition: width .5s cubic-bezier(.2,.8,.2,1); }
 
-/* Info strip */
-.strip { display: flex; gap: 8px; padding: 12px 16px 0; overflow-x: auto; scrollbar-width: none; }
-.strip::-webkit-scrollbar { display: none; }
-.tag { flex: none; padding: 8px 12px; border-radius: 14px; font-size: 12px; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.tag b { font-weight: 900; }
-.tag.big { font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: .3px; }
-.grad-text { background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-
-/* Balls */
-.balls { flex: 1 1 auto; display: flex; padding: 14px 16px; min-height: 150px; }
+/* Balls: card fills all the space down to the keypad; overs scroll inside it */
+:root { --chip-h: 34px; --row-gap: 10px; }
+.balls { flex: 1 1 auto; display: flex; padding: 14px 16px; min-height: 120px; }
 .balls-card { flex: 1; display: flex; flex-direction: column; min-height: 0; border-radius: 22px; padding: 14px 6px 6px 14px; }
 .balls-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 2px 8px 8px 0; }
+.tray { margin-top: auto; }
 .balls-head { display: flex; justify-content: space-between; align-items: baseline; margin: 0 8px 10px 0; font-size: 13px; font-weight: 700; }
 .balls-head span:last-child { color: var(--muted); font-weight: 500; }
-.chips { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; }
+.chips { display: flex; flex-direction: column; gap: var(--row-gap); }
 .over-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .chip {
-  min-width: 34px; height: 34px; padding: 0 8px; border-radius: 12px;
+  min-width: var(--chip-h); height: var(--chip-h); padding: 0 8px; border-radius: 12px;
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 13px; font-weight: 900; white-space: nowrap;
   background: var(--run); color: var(--run-text); border: 1.5px solid var(--run-border);
@@ -197,13 +190,19 @@ header h1 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.5px;
 .tray { flex-shrink: 0; padding: 12px 12px calc(12px + env(safe-area-inset-bottom)); border-radius: 28px 28px 0 0; }
 .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .keys button {
-  min-height: 54px; border-radius: 16px; background: var(--key); box-shadow: var(--key-shadow);
+  min-height: 62px; border-radius: 16px; background: var(--key); box-shadow: var(--key-shadow);
   font-size: 24px; font-weight: 700; transition: transform .08s ease;
 }
 .keys button:active:not(:disabled) { transform: scale(.94); }
 .keys .k4 { background: linear-gradient(135deg, var(--four), var(--four-2)); color: #fff; }
 .keys .k6 { background: linear-gradient(135deg, var(--six), var(--six-2)); color: #fff; }
 .keys .txt { font-size: 15px; font-weight: 700; color: var(--extra-text); background: var(--extra); box-shadow: none; }
+.keys .holdable { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
+.keys .holdable small { font-size: 10px; font-weight: 500; opacity: .75; margin-top: 2px; }
+/* Fill bar that grows while the key is held */
+.keys .holdable::after { content: ""; position: absolute; left: 0; bottom: 0; height: 4px; width: 0; background: var(--extra-border); border-radius: 0 4px 4px 0; }
+.keys .holdable.holding { transform: scale(.95); }
+.keys .holdable.holding::after { width: 100%; transition: width .45s linear; }
 .keys .wkt { background: linear-gradient(135deg, var(--wicket), var(--wicket-2)); color: #fff; font-size: 16px; font-weight: 900; letter-spacing: .5px; }
 .keys .undo { background: linear-gradient(135deg, var(--hero-2), var(--hero-3)); color: #fff; font-size: 16px; font-weight: 900; letter-spacing: .5px; }
 .keys .newinn { font-size: 14px; font-weight: 700; background: transparent; border: 2px dashed var(--line); box-shadow: none; }
@@ -302,7 +301,7 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
   header h1 { font-size: 19px; }
   .brand-mark { width: 34px; height: 34px; font-size: 18px; }
   .pill-btn { padding: 0 10px; font-size: 13px; }
-  .hero-wrap, .strip, .balls { padding-left: 12px; padding-right: 12px; }
+  .hero-wrap, .balls { padding-left: 12px; padding-right: 12px; }
   .hero { padding: 16px; border-radius: 24px; }
   .bat { font-size: 44px; }
   .rate { padding: 6px 9px; }
@@ -311,7 +310,8 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
   .keys button { font-size: 21px; }
   .keys .wkt, .keys .undo { font-size: 14px; }
   .keys .txt, .keys .newinn { font-size: 13px; }
-  .chip { min-width: 30px; height: 30px; font-size: 12px; }
+  :root { --chip-h: 30px; }
+  .chip { font-size: 12px; }
   .setup { padding-left: 12px; padding-right: 12px; }
   .setup h2 { font-size: 26px; }
   .dlg-options button { min-height: 48px; font-size: 18px; }
@@ -323,7 +323,7 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
   .hero-main { margin-top: 6px; }
   .score { font-size: clamp(46px, 14vw, 60px); }
   .rates { margin-top: 10px; }
-  .keys button { min-height: 48px; }
+  .keys button { min-height: 54px; }
   .tray { padding-top: 10px; }
   .kbd-hint { display: none; }
 }
@@ -339,23 +339,19 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
   .hero-main { margin-top: 4px; }
   .score { font-size: 44px; letter-spacing: -1px; }
   .overs { margin-top: 2px; font-size: 13px; }
-  .bat { display: none; }
+  .bat { font-size: 40px; }
   .rates { margin-top: 8px; gap: 6px; }
   .rate { padding: 5px 9px; font-size: 11px; }
   .rate b { font-size: 13px; }
   .chase { margin-top: 8px; }
   .chase-text { font-size: 12px; margin-bottom: 4px; }
   .bar { height: 8px; }
-  .strip { display: none; }
-  .xs-only { display: inline-block; }
   .balls { padding: 6px 12px; min-height: 76px; }
   .balls-card { padding: 10px 6px 4px 12px; border-radius: 18px; }
   .balls-head { margin-bottom: 6px; font-size: 12px; }
   .tray { padding-top: 8px; border-radius: 22px 22px 0 0; }
   .keys { gap: 6px; }
-  .keys button { min-height: 44px; border-radius: 14px; }
-  .tray-links { padding-top: 2px; }
-  .tray-links button { min-height: 30px; }
+  .keys button { min-height: 52px; border-radius: 14px; }
 }
 
 /* Phones in landscape: score on the left, keypad on the right */
@@ -375,18 +371,15 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
   .bat { font-size: 38px; }
   .rates { margin-top: 8px; }
   .chase { margin-top: 8px; }
-  .strip { display: none; }
-  .xs-only { display: inline-block; }
   .balls { grid-column: 1; grid-row: 2 / -1; padding-top: 8px; padding-bottom: 12px; min-height: 0; }
   .balls-card { padding: 10px 6px 4px 12px; border-radius: 18px; }
   .balls-head { margin-bottom: 6px; }
   .tray { grid-column: 2; grid-row: 1 / -1; align-self: stretch; overflow-y: auto; border-radius: 24px; margin: 4px 12px 12px 0; padding: 10px; display: flex; flex-direction: column; justify-content: center; }
   .keys { gap: 6px; }
-  .keys button { min-height: 0; height: clamp(38px, 15vh, 54px); font-size: 20px; }
+  .keys button { min-height: 0; height: clamp(40px, 16vh, 60px); font-size: 20px; }
   .keys .txt, .keys .newinn { font-size: 13px; }
   .keys .wkt, .keys .undo { font-size: 14px; }
   .kbd-hint { display: none; }
-  .tray-links { padding-top: 2px; }
   .setup { max-width: 520px; margin: 0 auto; width: 100%; }
   .setup .card { padding: 16px; }
   .setup .lead { margin-bottom: 12px; }
@@ -397,14 +390,15 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
 @media (min-width: 600px) and (max-width: 899px) and (min-height: 541px) {
   .app { max-width: 640px; }
   header { padding-left: 24px; padding-right: 24px; }
-  .hero-wrap, .strip, .balls { padding-left: 24px; padding-right: 24px; }
+  .hero-wrap, .balls { padding-left: 24px; padding-right: 24px; }
   .hero { padding: 24px 28px; border-radius: 32px; }
   .score { font-size: 88px; }
   .bat { font-size: 66px; }
-  .chip { min-width: 38px; height: 38px; font-size: 14px; }
-  .tray { margin: 0 24px 24px; border-radius: 28px; padding: 16px; }
+  :root { --chip-h: 38px; }
+  .chip { font-size: 14px; }
+  .tray { margin: auto 24px 24px; border-radius: 28px; padding: 16px; }
   .keys { gap: 10px; }
-  .keys button { min-height: 66px; font-size: 28px; border-radius: 18px; }
+  .keys button { min-height: 72px; font-size: 28px; border-radius: 18px; }
   .keys .txt, .keys .newinn { font-size: 16px; }
   .keys .wkt, .keys .undo { font-size: 17px; }
   .setup { width: 100%; max-width: 520px; margin: 4vh auto 0; }
@@ -422,17 +416,17 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
     padding: 0 12px 24px;
   }
   #matchView.hidden { display: none !important; }
-  .hero-wrap, .strip, .balls { grid-column: 1; }
+  .hero-wrap, .balls { grid-column: 1; }
   .hero { padding: 26px 30px 28px; border-radius: 32px; }
   .score { font-size: clamp(72px, 9vw, 104px); }
   .bat { font-size: 72px; }
   .rate { font-size: 13px; padding: 9px 14px; }
   .rate b { font-size: 18px; }
-  .tag { font-size: 13px; padding: 9px 14px; }
-  .chip { min-width: 38px; height: 38px; font-size: 14px; border-radius: 13px; }
+  :root { --chip-h: 38px; }
+  .chip { font-size: 14px; border-radius: 13px; }
   .tray { grid-column: 2; grid-row: 1 / -1; align-self: start; position: sticky; top: 12px; margin: 10px 16px 0 0; border-radius: 28px; padding: 16px; }
   .keys { gap: 10px; }
-  .keys button { min-height: 68px; font-size: 28px; border-radius: 18px; }
+  .keys button { min-height: 74px; font-size: 28px; border-radius: 18px; }
   .keys .txt, .keys .newinn { font-size: 16px; }
   .keys .wkt, .keys .undo { font-size: 17px; }
   .balls { min-height: 240px; }
@@ -472,7 +466,7 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
   <!-- Setup -->
   <section id="setupView" class="setup hidden" aria-labelledby="setupTitle">
     <div class="card glass">
-      <h2 id="setupTitle">Let's play! 🎉</h2>
+      <h2 id="setupTitle">Let's play Turf 🎾</h2>
       <p class="lead">Pick who bats first and how long the game is.</p>
       <form id="setupForm">
         <fieldset class="field">
@@ -515,13 +509,13 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
             <div class="score" id="scoreText">0/0</div>
             <div class="overs"><span id="oversText">0.0</span> / <span id="oversMax">20</span> overs</div>
           </div>
-          <div class="bat" aria-hidden="true">🏏</div>
+          <div class="bat" id="batIcon" aria-hidden="true">🦁</div>
         </div>
         <div class="rates">
+          <span class="rate">Extras:<b id="exTotal">0</b></span>
           <span class="rate">CRR<b id="crr">0.00</b></span>
           <span class="rate hidden" id="rrrRow">RRR<b id="rrr">0.00</b></span>
           <span class="rate" id="projRow">Projected<b id="proj">0</b></span>
-          <span class="rate xs-only">Extras<b id="exTotalXs">0</b></span>
         </div>
         <div class="chase hidden" id="chaseBox">
           <div class="chase-text"><span id="needLine"></span><span id="targetLine"></span></div>
@@ -530,13 +524,6 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
       </div>
     </div>
 
-    <div class="strip" aria-label="Extras">
-      <span class="tag glass big"><span class="grad-text">Extras <span id="exTotal">0</span></span></span>
-      <span class="tag glass">WD <b id="exWd">0</b></span>
-      <span class="tag glass">NB <b id="exNb">0</b></span>
-      <span class="tag glass">LB <b id="exLb">0</b></span>
-      <span class="tag glass">B <b id="exB">0</b></span>
-    </div>
 
     <div class="balls">
       <div class="balls-card glass">
@@ -553,16 +540,15 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
           <button type="button" data-run="2">2</button>
           <button type="button" data-run="3">3</button>
           <button type="button" data-run="4" class="k4">4</button>
-          <button type="button" data-run="5">5</button>
           <button type="button" data-run="6" class="k6">6</button>
-          <button type="button" data-act="wide" class="txt">Wide</button>
-          <button type="button" data-act="noball" class="txt">No Ball</button>
+          <button type="button" data-run="5">5</button>
+          <button type="button" data-act="wide" class="txt holdable" aria-label="Wide. Press and hold to add extra runs">Wide<small aria-hidden="true">hold for +runs</small></button>
+          <button type="button" data-act="noball" class="txt holdable" aria-label="No ball. Press and hold to add runs off the bat">No Ball<small aria-hidden="true">hold for +runs</small></button>
           <button type="button" data-act="wicket" class="wkt">WICKET</button>
-          <button type="button" id="newInnBtn" class="newinn">New innings</button>
+          <button type="button" id="newInnBtn" class="newinn">2nd Innings</button>
           <button type="button" id="undoBtn" class="undo">UNDO</button>
         </div>
-        <div class="tray-links hidden" id="endInnWrap"><button type="button" id="endInnBtn">End innings early</button></div>
-        <div class="kbd-hint">Keys: 0–6 · W wicket · D wide · N no ball · B byes · U undo</div>
+        <div class="kbd-hint">Keys: 0–6 · W wicket · D wide · N no ball · Shift+D / Shift+N + runs · B byes · U undo</div>
       </div>
 
       <div class="status hidden" id="statusCard" aria-live="polite">
@@ -806,16 +792,6 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
     );
   }
 
-  function endInnings() {
-    const s = stats(cur());
-    confirmDlg(
-      'End innings early?',
-      `${state.teams[curIdx()]} will finish on ${s.runs}/${s.wkts} after ${fmtOvers(s.legal)} overs. You can undo this.`,
-      'End innings',
-      () => { cur().closed = true; save(); render(); if (matchDone()) showResult(); }
-    );
-  }
-
   function newMatch() {
     confirmDlg('Start a new match?', 'The current match will be cleared. This cannot be undone.', 'New match', () => {
       state = null; save(); render();
@@ -931,11 +907,7 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
     $('crr').textContent = rate(s.runs, s.legal);
 
     $('exTotal').textContent = s.extras;
-    $('exTotalXs').textContent = s.extras;
-    $('exWd').textContent = s.wd;
-    $('exNb').textContent = s.nb;
-    $('exLb').textContent = s.lb;
-    $('exB').textContent = s.b;
+    $('batIcon').textContent = state.teams[i] === 'Team A' ? '🦁' : '🐯';
 
     const need = i === 1 ? t - s.runs : 0;
     $('rrrRow').classList.toggle('hidden', i !== 1);
@@ -980,8 +952,6 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
     $('padArea').classList.toggle('hidden', done);
     $('undoBtn').disabled = !inn.balls.length && !inn.closed && state.innings.length === 1;
     $('newInnBtn').disabled = i !== 0;
-    $('endInnWrap').classList.toggle('hidden', i !== 1);
-    $('endInnBtn').disabled = !inn.balls.length;
     const status = $('statusCard');
     status.classList.toggle('hidden', !done);
     if (done) {
@@ -990,7 +960,7 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
         $('statusEmoji').textContent = '🔁';
         $('statusTitle').textContent = `${why} ${s.runs}/${s.wkts}`;
         $('statusText').textContent = `${state.teams[1]} need ${s.runs + 1} to win from ${plural(state.overs, 'over')}.`;
-        $('statusAction').textContent = 'New innings →';
+        $('statusAction').textContent = '2nd Innings';
         $('statusAction').onclick = startSecondInnings;
       } else {
         const r = result();
@@ -1058,17 +1028,48 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
     render();
   });
 
+  // Wide / No Ball keys: quick tap = 1 run; press and hold (~0.45s) = picker for extra runs.
+  const HOLD_MS = 450;
+  const heldKeys = new Set(); // keys whose long-press already opened the picker
+  document.querySelectorAll('.keys .holdable').forEach((btn) => {
+    const kind = btn.dataset.act;
+    let timer = null;
+    const cancel = () => {
+      clearTimeout(timer);
+      timer = null;
+      btn.classList.remove('holding');
+    };
+    btn.addEventListener('pointerdown', (e) => {
+      if (e.button > 0) return;
+      heldKeys.delete(kind);
+      btn.classList.add('holding');
+      timer = setTimeout(() => {
+        heldKeys.add(kind);
+        cancel();
+        if (navigator.vibrate) navigator.vibrate(15);
+        pickRuns(kind);
+      }, HOLD_MS);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => btn.addEventListener(ev, cancel));
+    btn.addEventListener('contextmenu', (e) => e.preventDefault()); // stop the phone's long-press menu
+  });
+
   document.querySelector('.keys').addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn || btn.id === 'undoBtn' || btn.id === 'newInnBtn') return;
+    const act = btn.dataset.act;
     if (btn.dataset.run !== undefined) record({ kind: 'run', runs: +btn.dataset.run });
-    else if (btn.dataset.act === 'wicket') record({ kind: 'wicket', runs: 0 });
-    else pickRuns(btn.dataset.act);
+    else if (act === 'wicket') record({ kind: 'wicket', runs: 0 });
+    else if (act === 'wide' || act === 'noball') {
+      // A long-press already opened the picker; ignore the click that follows it.
+      if (heldKeys.delete(act)) return;
+      record({ kind: act, runs: 1 }); // quick tap: 1 run, shown as WD / NB
+    }
+    else pickRuns(act);
   });
   $('undoBtn').addEventListener('click', undo);
   $('newInnBtn').addEventListener('click', newInnings);
   $('statusUndo').addEventListener('click', undo);
-  $('endInnBtn').addEventListener('click', endInnings);
   $('newMatchBtn').addEventListener('click', newMatch);
 
   document.addEventListener('keydown', (e) => {
@@ -1079,8 +1080,8 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
     if (inningsDone(curIdx())) return;
     if (/^[0-6]$/.test(k)) record({ kind: 'run', runs: +k });
     else if (k === 'w') record({ kind: 'wicket', runs: 0 });
-    else if (k === 'd') pickRuns('wide');
-    else if (k === 'n') pickRuns('noball');
+    else if (k === 'd') { if (e.shiftKey) pickRuns('wide'); else record({ kind: 'wide', runs: 1 }); }
+    else if (k === 'n') { if (e.shiftKey) pickRuns('noball'); else record({ kind: 'noball', runs: 1 }); }
     else if (k === 'b' || k === 'l') pickRuns('byes');
   });
 
