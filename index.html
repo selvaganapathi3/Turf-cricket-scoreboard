@@ -1,0 +1,1091 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eefaf4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0f1f" media="(prefers-color-scheme: dark)">
+<title>Scoreboard</title>
+<meta name="description" content="A fun, simple ball-by-ball cricket scorer. Score runs, extras and wickets, chase a target and see the result.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Scoreboard 🏏">
+<meta property="og:description" content="A fun, simple ball-by-ball cricket scorer. Tap to score, chase the target, celebrate every six.">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%8F%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,900&display=swap" rel="stylesheet">
+<script>
+  // Apply a saved theme before first paint to avoid a flash.
+  try { const t = localStorage.getItem('cricket-scorer:v1:theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --page: #eefaf4;
+  --blob-1: #8ef0c0;
+  --blob-2: #ffc2e2;
+  --blob-3: #b9d6ff;
+  --blob-4: #fff1a8;
+  --glass: rgba(255,255,255,.72);
+  --glass-border: rgba(255,255,255,.9);
+  --text: #0f1b2d;
+  --muted: #5a677a;
+  --key: #ffffff;
+  --key-shadow: 0 2px 0 rgba(15,27,45,.08), 0 6px 14px rgba(15,27,45,.06);
+  --soft: #eef2f7;
+  --line: rgba(15,27,45,.1);
+  --hero-1: #059669;
+  --hero-2: #0d9488;
+  --hero-3: #4f46e5;
+  --accent: #0d9488;
+  --accent-2: #4f46e5;
+  --four: #0284c7;
+  --four-2: #38bdf8;
+  --six: #db2777;
+  --six-2: #f97316;
+  --wicket: #dc2626;
+  --wicket-2: #f43f5e;
+  --dot: #dcfce7;
+  --dot-border: #86efac;
+  --run: #fff7d6;
+  --run-border: #f5c84c;
+  --run-text: #6b4e00;
+  --extra: #ede9fe;
+  --extra-border: #a78bfa;
+  --extra-text: #5b21b6;
+  --on-accent: #ffffff;
+  --focus: #4f46e5;
+  --shadow: 0 10px 30px rgba(15,27,45,.08);
+  --backdrop: rgba(15,27,45,.45);
+  --font: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0b0f1f; --blob-1: #0f766e; --blob-2: #9d174d; --blob-3: #3730a3; --blob-4: #854d0e;
+    --glass: rgba(22,28,52,.66); --glass-border: rgba(255,255,255,.08);
+    --text: #eef2ff; --muted: #a3acc7; --key: #1b2240; --key-shadow: 0 2px 0 rgba(0,0,0,.35);
+    --soft: #232b4d; --line: rgba(255,255,255,.1);
+    --dot: #12311f; --dot-border: #22c55e; --run: #33290b; --run-border: #eab308; --run-text: #fde68a;
+    --extra: #2a2050; --extra-border: #8b5cf6; --extra-text: #ddd6fe;
+    --focus: #a5b4fc; --shadow: 0 10px 30px rgba(0,0,0,.35); --backdrop: rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0b0f1f; --blob-1: #0f766e; --blob-2: #9d174d; --blob-3: #3730a3; --blob-4: #854d0e;
+  --glass: rgba(22,28,52,.66); --glass-border: rgba(255,255,255,.08);
+  --text: #eef2ff; --muted: #a3acc7; --key: #1b2240; --key-shadow: 0 2px 0 rgba(0,0,0,.35);
+  --soft: #232b4d; --line: rgba(255,255,255,.1);
+  --dot: #12311f; --dot-border: #22c55e; --run: #33290b; --run-border: #eab308; --run-text: #fde68a;
+  --extra: #2a2050; --extra-border: #8b5cf6; --extra-text: #ddd6fe;
+  --focus: #a5b4fc; --shadow: 0 10px 30px rgba(0,0,0,.35); --backdrop: rgba(0,0,0,.6);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font: 15px/1.4 var(--font);
+  color: var(--text);
+  background: var(--page);
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+/* Floating colour blobs behind everything */
+.blobs { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.blobs span { position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%; filter: blur(70px); opacity: .55; animation: drift 22s ease-in-out infinite alternate; }
+.blobs span:nth-child(1) { background: var(--blob-1); top: -25vmax; left: -20vmax; }
+.blobs span:nth-child(2) { background: var(--blob-2); top: 10vh; right: -30vmax; animation-delay: -6s; }
+.blobs span:nth-child(3) { background: var(--blob-3); bottom: -30vmax; left: -10vmax; animation-delay: -12s; }
+.blobs span:nth-child(4) { background: var(--blob-4); bottom: 5vh; right: -25vmax; width: 40vmax; height: 40vmax; animation-delay: -3s; opacity: .4; }
+@keyframes drift { to { transform: translate(6vmax, 4vmax) scale(1.12); } }
+
+.app { position: relative; z-index: 1; max-width: 460px; height: 100vh; height: 100dvh; overflow-y: auto; margin: 0 auto; display: flex; flex-direction: column; }
+.app > * { flex-shrink: 0; }
+#matchView { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+#matchView > .hero-wrap, #matchView > .strip, #matchView > .tray { flex-shrink: 0; }
+.xs-only { display: none; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+button, label { touch-action: manipulation; }
+.keys, .chips, .score { -webkit-user-select: none; user-select: none; }
+.hidden { display: none !important; }
+
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button:disabled { opacity: .4; cursor: not-allowed; }
+
+.glass { background: var(--glass); border: 1px solid var(--glass-border); backdrop-filter: blur(16px) saturate(1.4); -webkit-backdrop-filter: blur(16px) saturate(1.4); box-shadow: var(--shadow); }
+
+/* Header */
+header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 18px 16px 8px; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-mark { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: linear-gradient(135deg, var(--hero-1), var(--hero-3)); box-shadow: 0 6px 16px rgba(79,70,229,.35); transform: rotate(-8deg); }
+header h1 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.5px; }
+.header-actions { display: flex; align-items: center; gap: 6px; }
+.pill-btn { min-height: 40px; padding: 0 14px; border-radius: 20px; font-size: 14px; font-weight: 700; }
+.icon-btn { width: 40px; height: 40px; border-radius: 20px; display: grid; place-items: center; }
+.icon-btn svg { width: 19px; height: 19px; }
+
+/* Hero score card */
+.hero-wrap { padding: 10px 16px 0; }
+.hero {
+  position: relative; overflow: hidden; border-radius: 28px; padding: 18px 20px 20px; color: #fff;
+  background: linear-gradient(135deg, var(--hero-1) 0%, var(--hero-2) 45%, var(--hero-3) 100%);
+  box-shadow: 0 18px 40px -12px rgba(79,70,229,.55);
+}
+.hero::before, .hero::after { content: ""; position: absolute; border-radius: 50%; pointer-events: none; }
+.hero::before { width: 220px; height: 220px; right: -70px; top: -90px; background: rgba(255,255,255,.14); }
+.hero::after { width: 140px; height: 140px; left: -50px; bottom: -70px; background: rgba(255,255,255,.1); }
+.hero-top { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.inn-tag { font-size: 12px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,.2); }
+.live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; }
+.live i { width: 8px; height: 8px; border-radius: 50%; background: #a3e635; box-shadow: 0 0 0 0 rgba(163,230,53,.7); animation: pulse 1.6s infinite; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 8px rgba(163,230,53,0); } 100% { box-shadow: 0 0 0 0 rgba(163,230,53,0); } }
+.hero-main { position: relative; display: flex; align-items: flex-end; justify-content: space-between; margin-top: 10px; }
+.score { font-size: 68px; font-weight: 900; line-height: .95; letter-spacing: -2px; font-variant-numeric: tabular-nums; text-shadow: 0 4px 18px rgba(0,0,0,.18); }
+.score.bump { animation: bump .35s ease-out; }
+@keyframes bump { 40% { transform: scale(1.08); } }
+.overs { margin-top: 6px; font-size: 14px; opacity: .9; font-variant-numeric: tabular-nums; }
+.bat { font-size: 54px; line-height: 1; filter: drop-shadow(0 6px 10px rgba(0,0,0,.25)); animation: wobble 3s ease-in-out infinite; transform-origin: 70% 90%; }
+@keyframes wobble { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+.rates { position: relative; display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.rate { padding: 7px 12px; border-radius: 12px; background: rgba(255,255,255,.18); font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.rate b { font-size: 15px; font-weight: 900; margin-left: 4px; }
+
+/* Chase progress */
+.chase { position: relative; margin-top: 14px; }
+.chase-text { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+.bar { height: 10px; border-radius: 999px; background: rgba(255,255,255,.22); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #fde047, #a3e635); transition: width .5s cubic-bezier(.2,.8,.2,1); }
+
+/* Info strip */
+.strip { display: flex; gap: 8px; padding: 12px 16px 0; overflow-x: auto; scrollbar-width: none; }
+.strip::-webkit-scrollbar { display: none; }
+.tag { flex: none; padding: 8px 12px; border-radius: 14px; font-size: 12px; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tag b { font-weight: 900; }
+.tag.big { font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: .3px; }
+.grad-text { background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* Balls */
+.balls { flex: 1 1 auto; display: flex; padding: 14px 16px; min-height: 150px; }
+.balls-card { flex: 1; display: flex; flex-direction: column; min-height: 0; border-radius: 22px; padding: 14px 6px 6px 14px; }
+.balls-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 2px 8px 8px 0; }
+.balls-head { display: flex; justify-content: space-between; align-items: baseline; margin: 0 8px 10px 0; font-size: 13px; font-weight: 700; }
+.balls-head span:last-child { color: var(--muted); font-weight: 500; }
+.chips { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; }
+.over-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip {
+  min-width: 34px; height: 34px; padding: 0 8px; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 900; white-space: nowrap;
+  background: var(--run); color: var(--run-text); border: 1.5px solid var(--run-border);
+}
+.chip.dot { background: var(--dot); border-color: var(--dot-border); font-size: 16px; }
+.chip.extra { background: var(--extra); color: var(--extra-text); border-color: var(--extra-border); font-size: 11px; }
+.chip.four { background: linear-gradient(135deg, var(--four), var(--four-2)); color: #fff; border-color: transparent; box-shadow: 0 4px 12px -2px rgba(2,132,199,.5); }
+.chip.six { background: linear-gradient(135deg, var(--six), var(--six-2)); color: #fff; border-color: transparent; box-shadow: 0 4px 14px -2px rgba(219,39,119,.55); }
+.chip.w { background: linear-gradient(135deg, var(--wicket), var(--wicket-2)); color: #fff; border-color: transparent; box-shadow: 0 4px 12px -2px rgba(220,38,38,.5); }
+.chip.pop { animation: pop .4s cubic-bezier(.3,1.6,.5,1); }
+@keyframes pop { from { transform: scale(0) rotate(-20deg); opacity: 0; } }
+.over-tag { font-size: 10px; font-weight: 700; color: var(--muted); padding: 0 2px 0 6px; border-left: 2px solid var(--line); height: 26px; display: inline-flex; align-items: center; }
+.empty { width: 100%; text-align: center; color: var(--muted); font-size: 14px; padding: 18px 0 8px; }
+.empty .big-emoji { font-size: 40px; display: block; margin-bottom: 4px; animation: wobble 3s ease-in-out infinite; }
+
+/* Keypad tray */
+.tray { flex-shrink: 0; padding: 12px 12px calc(12px + env(safe-area-inset-bottom)); border-radius: 28px 28px 0 0; }
+.keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.keys button {
+  min-height: 54px; border-radius: 16px; background: var(--key); box-shadow: var(--key-shadow);
+  font-size: 24px; font-weight: 700; transition: transform .08s ease;
+}
+.keys button:active:not(:disabled) { transform: scale(.94); }
+.keys .k4 { background: linear-gradient(135deg, var(--four), var(--four-2)); color: #fff; }
+.keys .k6 { background: linear-gradient(135deg, var(--six), var(--six-2)); color: #fff; }
+.keys .txt { font-size: 15px; font-weight: 700; color: var(--extra-text); background: var(--extra); box-shadow: none; }
+.keys .wkt { background: linear-gradient(135deg, var(--wicket), var(--wicket-2)); color: #fff; font-size: 16px; font-weight: 900; letter-spacing: .5px; }
+.keys .undo { background: linear-gradient(135deg, var(--hero-2), var(--hero-3)); color: #fff; font-size: 16px; font-weight: 900; letter-spacing: .5px; }
+.keys .newinn { font-size: 14px; font-weight: 700; background: transparent; border: 2px dashed var(--line); box-shadow: none; }
+.tray-links { display: flex; justify-content: center; padding: 8px 0 0; }
+.tray-links button { font-size: 13px; font-weight: 700; color: var(--muted); text-decoration: underline; min-height: 36px; padding: 0 10px; }
+.kbd-hint { text-align: center; font-size: 11px; color: var(--muted); padding-top: 8px; }
+@media (hover: none) { .kbd-hint { display: none; } }
+
+/* Innings-over / result panel */
+.status { text-align: center; padding: 6px 4px 2px; }
+.status .emoji { font-size: 44px; line-height: 1; display: block; margin-bottom: 6px; animation: wobble 2.4s ease-in-out infinite; }
+.status h2 { margin: 0 0 4px; font-size: 24px; font-weight: 900; letter-spacing: -.3px; }
+.status p { margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+.status .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.status .actions button { min-height: 52px; border-radius: 16px; font-weight: 700; background: var(--key); box-shadow: var(--key-shadow); }
+.status .actions .primary { background: linear-gradient(135deg, var(--hero-1), var(--hero-3)); color: #fff; }
+
+/* Setup */
+.setup { padding: 8px 16px 24px; }
+.setup .card { border-radius: 28px; padding: 22px 18px; }
+.setup h2 { margin: 0 0 4px; font-size: 30px; font-weight: 900; letter-spacing: -1px; }
+.setup .lead { margin: 0 0 20px; color: var(--muted); }
+.field { display: grid; gap: 10px; margin-bottom: 20px; border: 0; padding: 0; min-width: 0; }
+.field label, .field legend { font-size: 13px; font-weight: 700; padding: 0; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+.field legend { margin-bottom: 10px; }
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.choice label {
+  position: relative; display: grid; place-items: center; gap: 4px; padding: 16px 8px; border-radius: 20px; cursor: pointer;
+  background: var(--key); box-shadow: var(--key-shadow); border: 2px solid transparent;
+  transition: transform .15s ease;
+}
+.choice .avatar { font-size: 34px; line-height: 1; }
+.choice .nm { font-size: 18px; font-weight: 900; }
+.choice input { position: absolute; opacity: 0; pointer-events: none; }
+.choice label:has(input:checked) { color: #fff; transform: translateY(-2px); }
+.choice label.a:has(input:checked) { background: linear-gradient(135deg, var(--hero-1), var(--hero-2)); box-shadow: 0 10px 24px -8px rgba(5,150,105,.6); }
+.choice label.b:has(input:checked) { background: linear-gradient(135deg, var(--six), var(--six-2)); box-shadow: 0 10px 24px -8px rgba(219,39,119,.6); }
+.choice label:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+.stepper { display: grid; grid-template-columns: 52px 1fr 52px; gap: 8px; align-items: center; }
+.stepper button { height: 52px; border-radius: 16px; background: var(--key); box-shadow: var(--key-shadow); font-size: 24px; font-weight: 700; }
+.stepper input {
+  font: inherit; font-size: 26px; font-weight: 900; text-align: center; height: 52px; width: 100%;
+  border: 0; border-radius: 16px; background: var(--soft); color: var(--text); -moz-appearance: textfield;
+}
+.stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.presets button { padding: 6px 12px; border-radius: 999px; background: var(--soft); font-size: 13px; font-weight: 700; min-height: 34px; }
+.start-btn { width: 100%; min-height: 58px; border-radius: 18px; color: #fff; font-weight: 900; font-size: 18px; letter-spacing: .3px; background: linear-gradient(135deg, var(--hero-1), var(--hero-2), var(--hero-3)); box-shadow: 0 14px 30px -10px rgba(79,70,229,.6); }
+.start-btn:active { transform: scale(.98); }
+
+/* Dialog */
+dialog { border: 1px solid var(--glass-border); border-radius: 26px; padding: 22px; width: min(92vw, 370px); color: var(--text); background: var(--glass); backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4); box-shadow: 0 24px 60px rgba(0,0,0,.3); }
+dialog[open] { animation: dlgIn .25s cubic-bezier(.3,1.4,.5,1); }
+@keyframes dlgIn { from { transform: translateY(16px) scale(.94); opacity: 0; } }
+dialog::backdrop { background: var(--backdrop); }
+dialog h3 { margin: 0 0 4px; font-size: 22px; font-weight: 900; }
+dialog p { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+.dlg-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+.dlg-options button { min-height: 54px; border-radius: 16px; background: var(--key); box-shadow: var(--key-shadow); font-weight: 900; font-size: 20px; }
+.dlg-options button:active { transform: scale(.94); }
+.dlg-group { grid-column: 1 / -1; font-size: 12px; font-weight: 700; color: var(--muted); margin-top: 4px; }
+.dlg-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.dlg-actions button { min-height: 46px; padding: 0 18px; border-radius: 14px; font-weight: 700; background: var(--soft); }
+.dlg-actions .primary { background: linear-gradient(135deg, var(--hero-1), var(--hero-3)); color: #fff; }
+.dlg-actions .danger { background: linear-gradient(135deg, var(--wicket), var(--wicket-2)); color: #fff; }
+.result-big { font-size: 26px; font-weight: 900; color: var(--text); margin: 4px 0 6px; letter-spacing: -.5px; }
+
+/* Celebration burst */
+.burst { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; pointer-events: none; }
+.burst span {
+  font-size: 92px; font-weight: 900; font-style: italic; letter-spacing: -3px; color: #fff;
+  -webkit-text-stroke: 3px rgba(0,0,0,.08);
+  animation: burst 1s cubic-bezier(.2,1.3,.4,1) forwards;
+}
+.burst.four span { background: linear-gradient(135deg, var(--four), var(--four-2)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 8px 20px rgba(2,132,199,.5)); }
+.burst.six span { background: linear-gradient(135deg, var(--six), var(--six-2)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 8px 20px rgba(219,39,119,.55)); }
+.burst.out span { background: linear-gradient(135deg, var(--wicket), var(--wicket-2)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 8px 20px rgba(220,38,38,.5)); }
+@keyframes burst {
+  0% { transform: scale(.2) rotate(-12deg); opacity: 0; }
+  35% { transform: scale(1.1) rotate(-6deg); opacity: 1; }
+  70% { transform: scale(1) rotate(-6deg); opacity: 1; }
+  100% { transform: scale(1.3) rotate(-6deg); opacity: 0; }
+}
+.shake { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+#confetti { position: fixed; inset: 0; z-index: 49; pointer-events: none; width: 100%; height: 100%; }
+
+/* ---------- Responsive ---------- */
+.score { font-size: clamp(52px, 17vw, 72px); }
+.burst span { font-size: clamp(64px, 22vw, 120px); }
+header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(16px + env(safe-area-inset-left)); padding-right: calc(16px + env(safe-area-inset-right)); }
+
+/* Small phones (iPhone SE / 320–360px wide) */
+@media (max-width: 360px) {
+  header { padding-left: 12px; padding-right: 12px; }
+  header h1 { font-size: 19px; }
+  .brand-mark { width: 34px; height: 34px; font-size: 18px; }
+  .pill-btn { padding: 0 10px; font-size: 13px; }
+  .hero-wrap, .strip, .balls { padding-left: 12px; padding-right: 12px; }
+  .hero { padding: 16px; border-radius: 24px; }
+  .bat { font-size: 44px; }
+  .rate { padding: 6px 9px; }
+  .tray { padding-left: 8px; padding-right: 8px; }
+  .keys { gap: 6px; }
+  .keys button { font-size: 21px; }
+  .keys .wkt, .keys .undo { font-size: 14px; }
+  .keys .txt, .keys .newinn { font-size: 13px; }
+  .chip { min-width: 30px; height: 30px; font-size: 12px; }
+  .setup { padding-left: 12px; padding-right: 12px; }
+  .setup h2 { font-size: 26px; }
+  .dlg-options button { min-height: 48px; font-size: 18px; }
+}
+
+/* Short screens: tighten vertical space so the keypad stays on screen */
+@media (max-height: 720px) and (orientation: portrait) {
+  .hero { padding: 14px 18px 16px; }
+  .hero-main { margin-top: 6px; }
+  .score { font-size: clamp(46px, 14vw, 60px); }
+  .rates { margin-top: 10px; }
+  .keys button { min-height: 48px; }
+  .tray { padding-top: 10px; }
+  .kbd-hint { display: none; }
+}
+@media (max-height: 860px) and (orientation: portrait) {
+  header { padding-top: calc(8px + env(safe-area-inset-top)); padding-bottom: 4px; }
+  .brand-mark { width: 30px; height: 30px; font-size: 16px; border-radius: 10px; }
+  header h1 { font-size: 18px; }
+  .icon-btn { width: 36px; height: 36px; }
+  .pill-btn { min-height: 36px; }
+  .hero-wrap { padding-top: 6px; }
+  .hero { padding: 12px 16px 14px; border-radius: 22px; }
+  .inn-tag { font-size: 11px; padding: 4px 10px; }
+  .hero-main { margin-top: 4px; }
+  .score { font-size: 44px; letter-spacing: -1px; }
+  .overs { margin-top: 2px; font-size: 13px; }
+  .bat { display: none; }
+  .rates { margin-top: 8px; gap: 6px; }
+  .rate { padding: 5px 9px; font-size: 11px; }
+  .rate b { font-size: 13px; }
+  .chase { margin-top: 8px; }
+  .chase-text { font-size: 12px; margin-bottom: 4px; }
+  .bar { height: 8px; }
+  .strip { display: none; }
+  .xs-only { display: inline-block; }
+  .balls { padding: 6px 12px; min-height: 76px; }
+  .balls-card { padding: 10px 6px 4px 12px; border-radius: 18px; }
+  .balls-head { margin-bottom: 6px; font-size: 12px; }
+  .tray { padding-top: 8px; border-radius: 22px 22px 0 0; }
+  .keys { gap: 6px; }
+  .keys button { min-height: 44px; border-radius: 14px; }
+  .tray-links { padding-top: 2px; }
+  .tray-links button { min-height: 30px; }
+}
+
+/* Phones in landscape: score on the left, keypad on the right */
+@media (orientation: landscape) and (max-height: 540px) {
+  .app { max-width: none; }
+  header { padding-top: calc(8px + env(safe-area-inset-top)); padding-bottom: 4px; }
+  #matchView {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 42%);
+    grid-template-rows: auto auto minmax(0, 1fr); column-gap: 4px;
+    padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
+  }
+  #matchView.hidden { display: none !important; }
+  .hero-wrap { grid-column: 1; padding-top: 4px; }
+  .hero { padding: 12px 16px; border-radius: 22px; }
+  .hero-main { margin-top: 4px; }
+  .score { font-size: 46px; }
+  .bat { font-size: 38px; }
+  .rates { margin-top: 8px; }
+  .chase { margin-top: 8px; }
+  .strip { display: none; }
+  .xs-only { display: inline-block; }
+  .balls { grid-column: 1; grid-row: 2 / -1; padding-top: 8px; padding-bottom: 12px; min-height: 0; }
+  .balls-card { padding: 10px 6px 4px 12px; border-radius: 18px; }
+  .balls-head { margin-bottom: 6px; }
+  .tray { grid-column: 2; grid-row: 1 / -1; align-self: stretch; overflow-y: auto; border-radius: 24px; margin: 4px 12px 12px 0; padding: 10px; display: flex; flex-direction: column; justify-content: center; }
+  .keys { gap: 6px; }
+  .keys button { min-height: 0; height: clamp(38px, 15vh, 54px); font-size: 20px; }
+  .keys .txt, .keys .newinn { font-size: 13px; }
+  .keys .wkt, .keys .undo { font-size: 14px; }
+  .kbd-hint { display: none; }
+  .tray-links { padding-top: 2px; }
+  .setup { max-width: 520px; margin: 0 auto; width: 100%; }
+  .setup .card { padding: 16px; }
+  .setup .lead { margin-bottom: 12px; }
+  .choice label { padding: 10px 8px; }
+}
+
+/* Portrait tablets / large foldables: one wide column with bigger targets */
+@media (min-width: 600px) and (max-width: 899px) and (min-height: 541px) {
+  .app { max-width: 640px; }
+  header { padding-left: 24px; padding-right: 24px; }
+  .hero-wrap, .strip, .balls { padding-left: 24px; padding-right: 24px; }
+  .hero { padding: 24px 28px; border-radius: 32px; }
+  .score { font-size: 88px; }
+  .bat { font-size: 66px; }
+  .chip { min-width: 38px; height: 38px; font-size: 14px; }
+  .tray { margin: 0 24px 24px; border-radius: 28px; padding: 16px; }
+  .keys { gap: 10px; }
+  .keys button { min-height: 66px; font-size: 28px; border-radius: 18px; }
+  .keys .txt, .keys .newinn { font-size: 16px; }
+  .keys .wkt, .keys .undo { font-size: 17px; }
+  .setup { width: 100%; max-width: 520px; margin: 4vh auto 0; }
+}
+
+/* Tablets in landscape and desktops: two-column scoreboard */
+@media (min-width: 900px) and (min-height: 541px) {
+  .app { max-width: 1080px; }
+  header { padding: calc(24px + env(safe-area-inset-top)) 28px 12px; }
+  header h1 { font-size: 26px; }
+  .setup { width: 100%; max-width: 520px; margin: 4vh auto 0; }
+  #matchView {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
+    grid-template-rows: auto auto minmax(0, 1fr); column-gap: 8px;
+    padding: 0 12px 24px;
+  }
+  #matchView.hidden { display: none !important; }
+  .hero-wrap, .strip, .balls { grid-column: 1; }
+  .hero { padding: 26px 30px 28px; border-radius: 32px; }
+  .score { font-size: clamp(72px, 9vw, 104px); }
+  .bat { font-size: 72px; }
+  .rate { font-size: 13px; padding: 9px 14px; }
+  .rate b { font-size: 18px; }
+  .tag { font-size: 13px; padding: 9px 14px; }
+  .chip { min-width: 38px; height: 38px; font-size: 14px; border-radius: 13px; }
+  .tray { grid-column: 2; grid-row: 1 / -1; align-self: start; position: sticky; top: 12px; margin: 10px 16px 0 0; border-radius: 28px; padding: 16px; }
+  .keys { gap: 10px; }
+  .keys button { min-height: 68px; font-size: 28px; border-radius: 18px; }
+  .keys .txt, .keys .newinn { font-size: 16px; }
+  .keys .wkt, .keys .undo { font-size: 17px; }
+  .balls { min-height: 240px; }
+  dialog { width: min(92vw, 420px); }
+}
+@media (min-width: 1200px) and (min-height: 541px) {
+  .app { max-width: 1200px; }
+  #matchView { grid-template-columns: minmax(0, 1fr) 440px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .burst { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="blobs" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+<div class="burst hidden" id="burst" aria-hidden="true"><span id="burstText"></span></div>
+
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">🏏</div>
+      <h1>Scoreboard</h1>
+    </div>
+    <div class="header-actions">
+      <button id="themeBtn" class="icon-btn glass" type="button" aria-label="Switch to dark mode">
+        <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg id="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <button id="newMatchBtn" class="pill-btn glass hidden" type="button">New Match</button>
+    </div>
+  </header>
+
+  <!-- Setup -->
+  <section id="setupView" class="setup hidden" aria-labelledby="setupTitle">
+    <div class="card glass">
+      <h2 id="setupTitle">Let's play! 🎉</h2>
+      <p class="lead">Pick who bats first and how long the game is.</p>
+      <form id="setupForm">
+        <fieldset class="field">
+          <legend>Batting first</legend>
+          <div class="choice">
+            <label class="a"><input type="radio" name="batFirst" value="Team A" checked><span class="avatar" aria-hidden="true">🦁</span><span class="nm">Team A</span></label>
+            <label class="b"><input type="radio" name="batFirst" value="Team B"><span class="avatar" aria-hidden="true">🐯</span><span class="nm">Team B</span></label>
+          </div>
+        </fieldset>
+        <div class="field">
+          <label for="oversIn">Overs per innings</label>
+          <div class="stepper">
+            <button type="button" id="oversDown" aria-label="Fewer overs">−</button>
+            <input id="oversIn" type="number" inputmode="numeric" min="1" max="100" value="20" required>
+            <button type="button" id="oversUp" aria-label="More overs">+</button>
+          </div>
+          <div class="presets" role="group" aria-label="Quick picks">
+            <button type="button" data-overs="5">5</button>
+            <button type="button" data-overs="6">6</button>
+            <button type="button" data-overs="10">10</button>
+            <button type="button" data-overs="20">T20</button>
+            <button type="button" data-overs="50">ODI</button>
+          </div>
+        </div>
+        <button type="submit" class="start-btn">Start match →</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Match -->
+  <div id="matchView" class="hidden">
+    <div class="hero-wrap" aria-live="polite">
+      <div class="hero" id="hero">
+        <div class="hero-top">
+          <span class="inn-tag" id="innTab">1st Innings</span>
+          <span class="live" id="liveTag"><i></i>LIVE</span>
+        </div>
+        <div class="hero-main">
+          <div>
+            <div class="score" id="scoreText">0/0</div>
+            <div class="overs"><span id="oversText">0.0</span> / <span id="oversMax">20</span> overs</div>
+          </div>
+          <div class="bat" aria-hidden="true">🏏</div>
+        </div>
+        <div class="rates">
+          <span class="rate">CRR<b id="crr">0.00</b></span>
+          <span class="rate hidden" id="rrrRow">RRR<b id="rrr">0.00</b></span>
+          <span class="rate" id="projRow">Projected<b id="proj">0</b></span>
+          <span class="rate xs-only">Extras<b id="exTotalXs">0</b></span>
+        </div>
+        <div class="chase hidden" id="chaseBox">
+          <div class="chase-text"><span id="needLine"></span><span id="targetLine"></span></div>
+          <div class="bar" role="progressbar" aria-label="Progress to target" aria-valuemin="0" aria-valuemax="100" id="barWrap"><i id="bar"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="strip" aria-label="Extras">
+      <span class="tag glass big"><span class="grad-text">Extras <span id="exTotal">0</span></span></span>
+      <span class="tag glass">WD <b id="exWd">0</b></span>
+      <span class="tag glass">NB <b id="exNb">0</b></span>
+      <span class="tag glass">LB <b id="exLb">0</b></span>
+      <span class="tag glass">B <b id="exB">0</b></span>
+    </div>
+
+    <div class="balls">
+      <div class="balls-card glass">
+        <div class="balls-head"><span>Ball by ball</span><span id="thisOverRuns"></span></div>
+        <div class="balls-scroll" id="ballsArea"><div class="chips" id="chips"></div></div>
+      </div>
+    </div>
+
+    <div class="tray glass">
+      <div id="padArea">
+        <div class="keys" role="group" aria-label="Record a ball">
+          <button type="button" data-run="0">0</button>
+          <button type="button" data-run="1">1</button>
+          <button type="button" data-run="2">2</button>
+          <button type="button" data-run="3">3</button>
+          <button type="button" data-run="4" class="k4">4</button>
+          <button type="button" data-run="5">5</button>
+          <button type="button" data-run="6" class="k6">6</button>
+          <button type="button" data-act="wide" class="txt">Wide</button>
+          <button type="button" data-act="noball" class="txt">No Ball</button>
+          <button type="button" data-act="wicket" class="wkt">WICKET</button>
+          <button type="button" id="newInnBtn" class="newinn">New innings</button>
+          <button type="button" id="undoBtn" class="undo">UNDO</button>
+        </div>
+        <div class="tray-links hidden" id="endInnWrap"><button type="button" id="endInnBtn">End innings early</button></div>
+        <div class="kbd-hint">Keys: 0–6 · W wicket · D wide · N no ball · B byes · U undo</div>
+      </div>
+
+      <div class="status hidden" id="statusCard" aria-live="polite">
+        <span class="emoji" id="statusEmoji" aria-hidden="true"></span>
+        <h2 id="statusTitle"></h2>
+        <p id="statusText"></p>
+        <div class="actions">
+          <button type="button" id="statusUndo">Undo last ball</button>
+          <button type="button" id="statusAction" class="primary"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <h3 id="dlgTitle"></h3>
+  <p id="dlgText"></p>
+  <div class="dlg-options" id="dlgOptions"></div>
+  <div class="dlg-actions" id="dlgActions"></div>
+</dialog>
+
+<script>
+(() => {
+  const KEY = 'cricket-scorer:v1';
+  const MAX_WKTS = 10; // 11-a-side: all out at 10 wickets
+  const LEGAL = { run: true, wicket: true, bye: true, legbye: true, wide: false, noball: false };
+  const $ = (id) => document.getElementById(id);
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  // ---------- State ----------
+  // state = { teams:[battingFirst, battingSecond], overs, innings:[{ balls:[{kind,runs}], closed:bool }] }
+  let state = load();
+  let lastSetup = loadSetup();
+  let justAdded = false;
+
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY));
+      return s && s.teams && s.teams.every((t) => t === 'Team A' || t === 'Team B') ? s : null;
+    } catch (e) { return null; }
+  }
+  function save() {
+    try {
+      if (state) localStorage.setItem(KEY, JSON.stringify(state)); else localStorage.removeItem(KEY);
+    } catch (e) { /* storage unavailable: app still works in memory */ }
+  }
+  function loadSetup() {
+    try { return JSON.parse(localStorage.getItem(KEY + ':setup')) || null; } catch (e) { return null; }
+  }
+  function saveSetup(s) {
+    try { localStorage.setItem(KEY + ':setup', JSON.stringify(s)); } catch (e) {}
+  }
+
+  // ---------- Theme ----------
+  const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => (document.documentElement.dataset.theme || (darkQuery.matches ? 'dark' : 'light')) === 'dark';
+  function paintThemeButton() {
+    const dark = isDark();
+    $('iconMoon').classList.toggle('hidden', dark);
+    $('iconSun').classList.toggle('hidden', !dark);
+    $('themeBtn').setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+  $('themeBtn').addEventListener('click', () => {
+    const next = isDark() ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem(KEY + ':theme', next); } catch (e) {}
+    paintThemeButton();
+  });
+  darkQuery.addEventListener('change', paintThemeButton);
+  paintThemeButton();
+
+  // ---------- Derived values ----------
+  const maxBalls = () => state.overs * 6;
+  const curIdx = () => state.innings.length - 1;
+  const cur = () => state.innings[curIdx()];
+
+  function stats(inn) {
+    let runs = 0, wkts = 0, legal = 0, wd = 0, nb = 0, b = 0, lb = 0;
+    for (const x of inn.balls) {
+      runs += x.runs;
+      if (x.kind === 'wicket') wkts++;
+      if (LEGAL[x.kind]) legal++;
+      if (x.kind === 'wide') wd += x.runs;
+      if (x.kind === 'noball') nb += 1;
+      if (x.kind === 'bye') b += x.runs;
+      if (x.kind === 'legbye') lb += x.runs;
+    }
+    return { runs, wkts, legal, wd, nb, b, lb, extras: wd + nb + b + lb };
+  }
+  const target = () => (state.innings.length > 1 ? stats(state.innings[0]).runs + 1 : null);
+
+  function inningsDone(i) {
+    const inn = state.innings[i];
+    if (!inn) return false;
+    const s = stats(inn);
+    if (inn.closed || s.legal >= maxBalls() || s.wkts >= MAX_WKTS) return true;
+    return i === 1 && s.runs >= target();
+  }
+  const matchDone = () => state.innings.length === 2 && inningsDone(1);
+
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+  function result() {
+    const t = target();
+    const s = stats(state.innings[1]);
+    const [a, b] = state.teams;
+    if (s.runs >= t) {
+      const left = maxBalls() - s.legal;
+      return { winner: b, text: `${b} won by ${plural(MAX_WKTS - s.wkts, 'wicket')}`, sub: left > 0 ? `with ${plural(left, 'ball')} to spare` : 'off the last ball' };
+    }
+    if (s.runs === t - 1) return { winner: null, text: 'Match tied', sub: `Both teams scored ${s.runs}` };
+    return { winner: a, text: `${a} won by ${plural(t - 1 - s.runs, 'run')}`, sub: `${b} finished on ${s.runs}/${s.wkts}` };
+  }
+
+  const fmtOvers = (legal) => Math.floor(legal / 6) + '.' + (legal % 6);
+  const rate = (runs, legal) => (legal ? (runs * 6 / legal) : 0).toFixed(2);
+
+  function label(b) {
+    switch (b.kind) {
+      case 'run':
+        if (b.runs === 0) return { t: '🌳', c: 'dot', a: 'Dot ball' };
+        return { t: String(b.runs), c: b.runs === 4 ? 'four' : b.runs === 6 ? 'six' : '', a: plural(b.runs, 'run') };
+      case 'wicket': return { t: 'W', c: 'w', a: 'Wicket' };
+      case 'wide': return { t: b.runs > 1 ? `WD+${b.runs - 1}` : 'WD', c: 'extra', a: `Wide, ${plural(b.runs, 'run')}` };
+      case 'noball': return { t: b.runs > 1 ? `NB+${b.runs - 1}` : 'NB', c: 'extra', a: `No ball, ${plural(b.runs, 'run')}` };
+      case 'bye': return { t: `${b.runs}B`, c: 'extra', a: plural(b.runs, 'bye') };
+      case 'legbye': return { t: `${b.runs}LB`, c: 'extra', a: plural(b.runs, 'leg bye') };
+    }
+  }
+
+  // ---------- Celebrations ----------
+  let burstTimer;
+  function burst(text, cls) {
+    if (reduceMotion.matches) return;
+    const el = $('burst');
+    el.className = 'burst ' + cls;
+    const span = $('burstText');
+    span.textContent = text;
+    span.style.animation = 'none';
+    void span.offsetWidth; // restart animation
+    span.style.animation = '';
+    clearTimeout(burstTimer);
+    burstTimer = setTimeout(() => el.classList.add('hidden'), 1000);
+  }
+
+  const canvas = $('confetti');
+  const ctx = canvas.getContext('2d');
+  let pieces = [], rafId = null;
+  function confetti(amount = 90) {
+    if (reduceMotion.matches) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const colors = ['#f43f5e', '#f97316', '#facc15', '#a3e635', '#22d3ee', '#6366f1', '#ec4899'];
+    for (let n = 0; n < amount; n++) {
+      pieces.push({
+        x: innerWidth / 2 + (Math.random() - .5) * 80, y: innerHeight * .4,
+        vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4,
+        r: Math.random() * Math.PI, vr: (Math.random() - .5) * .4,
+        w: 6 + Math.random() * 6, h: 8 + Math.random() * 8,
+        c: colors[n % colors.length], life: 0,
+      });
+    }
+    if (!rafId) rafId = requestAnimationFrame(tick);
+  }
+  function tick() {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    pieces.forEach((p) => {
+      p.vy += .35; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life++;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.r);
+      ctx.globalAlpha = Math.max(0, 1 - p.life / 110);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    pieces = pieces.filter((p) => p.life < 110 && p.y < innerHeight + 40);
+    rafId = pieces.length ? requestAnimationFrame(tick) : (ctx.clearRect(0, 0, innerWidth, innerHeight), null);
+  }
+
+  function celebrate(ball) {
+    if (ball.kind === 'run' && ball.runs === 6) { burst('SIX!', 'six'); confetti(90); }
+    else if (ball.kind === 'run' && ball.runs === 4) { burst('FOUR!', 'four'); confetti(40); }
+    else if (ball.kind === 'wicket') {
+      burst('OUT!', 'out');
+      if (!reduceMotion.matches) {
+        const hero = $('hero');
+        hero.classList.remove('shake'); void hero.offsetWidth; hero.classList.add('shake');
+      }
+    }
+  }
+
+  // ---------- Actions ----------
+  function record(ball) {
+    if (!state || inningsDone(curIdx())) return;
+    const wasDone = matchDone();
+    cur().balls.push(ball);
+    save();
+    justAdded = true;
+    render();
+    justAdded = false;
+    if (!wasDone && matchDone()) {
+      showResult();
+      if (result().winner) confetti(180);
+    } else {
+      celebrate(ball);
+    }
+  }
+
+  function undo() {
+    if (!state) return;
+    const inn = cur();
+    if (inn.closed) inn.closed = false;
+    else if (inn.balls.length) inn.balls.pop();
+    else if (state.innings.length > 1) { state.innings.pop(); state.innings[0].closed = false; }
+    else return;
+    save();
+    render();
+  }
+
+  function startSecondInnings() {
+    if (state.innings.length !== 1) return;
+    state.innings[0].closed = !inningsDone(0) || state.innings[0].closed;
+    state.innings.push({ balls: [], closed: false });
+    save();
+    render();
+  }
+
+  function newInnings() {
+    if (!state || state.innings.length !== 1) return;
+    const s = stats(cur());
+    const [a, b] = state.teams;
+    confirmDlg(
+      'Start 2nd innings?',
+      `${a}'s innings ends at ${s.runs}/${s.wkts} (${fmtOvers(s.legal)} overs). ${b} will need ${s.runs + 1} to win. You can undo this.`,
+      'Start 2nd innings',
+      startSecondInnings
+    );
+  }
+
+  function endInnings() {
+    const s = stats(cur());
+    confirmDlg(
+      'End innings early?',
+      `${state.teams[curIdx()]} will finish on ${s.runs}/${s.wkts} after ${fmtOvers(s.legal)} overs. You can undo this.`,
+      'End innings',
+      () => { cur().closed = true; save(); render(); if (matchDone()) showResult(); }
+    );
+  }
+
+  function newMatch() {
+    confirmDlg('Start a new match?', 'The current match will be cleared. This cannot be undone.', 'New match', () => {
+      state = null; save(); render();
+    }, true);
+  }
+
+  // ---------- Dialog helpers ----------
+  const dlg = $('dlg');
+  function openDlg({ title, text = '', options = [], actions = [] }) {
+    $('dlgTitle').textContent = title;
+    $('dlgText').innerHTML = text;
+    $('dlgText').classList.toggle('hidden', !text);
+    const opts = $('dlgOptions');
+    opts.innerHTML = '';
+    opts.classList.toggle('hidden', !options.length);
+    options.forEach((o) => {
+      if (o.group) {
+        const g = document.createElement('div');
+        g.className = 'dlg-group';
+        g.textContent = o.group;
+        opts.appendChild(g);
+        return;
+      }
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = o.label;
+      if (o.aria) btn.setAttribute('aria-label', o.aria);
+      btn.onclick = () => { dlg.close(); o.onPick(); };
+      opts.appendChild(btn);
+    });
+    const acts = $('dlgActions');
+    acts.innerHTML = '';
+    actions.forEach((a) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = a.label;
+      if (a.cls) btn.className = a.cls;
+      btn.onclick = () => { dlg.close(); a.onClick && a.onClick(); };
+      acts.appendChild(btn);
+    });
+    dlg.showModal();
+    const first = opts.querySelector('button') || acts.querySelector('button:last-child');
+    if (first) first.focus();
+  }
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); }); // click backdrop closes
+
+  function confirmDlg(title, text, okLabel, onOk, danger) {
+    openDlg({ title, text: escapeHtml(text), actions: [
+      { label: 'Cancel' },
+      { label: okLabel, cls: danger ? 'danger' : 'primary', onClick: onOk },
+    ] });
+  }
+
+  function range(from, to, make, lbl, aria) {
+    const out = [];
+    for (let n = from; n <= to; n++) out.push({ label: lbl(n), aria: aria && aria(n), onPick: () => record(make(n)) });
+    return out;
+  }
+
+  function pickRuns(kind) {
+    let cfg;
+    if (kind === 'wide') {
+      cfg = { title: 'Wide', text: '1 wide run is added automatically. How many more runs were scored?',
+        options: range(0, 6, (n) => ({ kind: 'wide', runs: 1 + n }), String, (n) => `Wide plus ${plural(n, 'run')}`) };
+    } else if (kind === 'noball') {
+      cfg = { title: 'No Ball', text: '1 no-ball run is added automatically. How many runs off the bat?',
+        options: range(0, 6, (n) => ({ kind: 'noball', runs: 1 + n }), String, (n) => `No ball plus ${plural(n, 'run')}`) };
+    } else {
+      cfg = { title: 'Byes / Leg byes', text: 'Runs taken without the bat.',
+        options: [
+          { group: 'Byes' }, ...range(1, 4, (n) => ({ kind: 'bye', runs: n }), (n) => `${n}B`),
+          { group: 'Leg byes' }, ...range(1, 4, (n) => ({ kind: 'legbye', runs: n }), (n) => `${n}LB`),
+        ] };
+    }
+    openDlg({ ...cfg, actions: [{ label: 'Cancel' }] });
+  }
+
+  function showResult() {
+    const r = result();
+    openDlg({
+      title: r.winner ? '🏆 Match over' : '🤝 Match over',
+      text: `<div class="result-big">${escapeHtml(r.text)}</div>${escapeHtml(r.sub)}`,
+      actions: [{ label: 'Close', cls: 'primary' }],
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // ---------- Rendering ----------
+  function render() {
+    const inMatch = !!state;
+    $('setupView').classList.toggle('hidden', inMatch);
+    $('matchView').classList.toggle('hidden', !inMatch);
+    $('newMatchBtn').classList.toggle('hidden', !inMatch);
+    if (!inMatch) { fillSetup(); return; }
+
+    const i = curIdx();
+    const inn = cur();
+    const s = stats(inn);
+    const t = target();
+    const done = inningsDone(i);
+    const left = maxBalls() - s.legal;
+
+    $('innTab').textContent = `${i === 0 ? '1st' : '2nd'} Innings · ${state.teams[i]}`;
+    $('liveTag').classList.toggle('hidden', done);
+    const scoreEl = $('scoreText');
+    scoreEl.textContent = `${s.runs}/${s.wkts}`;
+    if (justAdded && !reduceMotion.matches) { scoreEl.classList.remove('bump'); void scoreEl.offsetWidth; scoreEl.classList.add('bump'); }
+    $('oversText').textContent = fmtOvers(s.legal);
+    $('oversMax').textContent = state.overs;
+    $('crr').textContent = rate(s.runs, s.legal);
+
+    $('exTotal').textContent = s.extras;
+    $('exTotalXs').textContent = s.extras;
+    $('exWd').textContent = s.wd;
+    $('exNb').textContent = s.nb;
+    $('exLb').textContent = s.lb;
+    $('exB').textContent = s.b;
+
+    const need = i === 1 ? t - s.runs : 0;
+    $('rrrRow').classList.toggle('hidden', i !== 1);
+    $('rrr').textContent = i === 1 && left > 0 && need > 0 ? rate(need, left) : '—';
+    $('projRow').classList.toggle('hidden', i !== 0);
+    $('proj').textContent = s.legal ? Math.round(s.runs * maxBalls() / s.legal) : 0;
+
+    $('chaseBox').classList.toggle('hidden', i !== 1);
+    if (i === 1) {
+      $('needLine').textContent = need > 0 && !done ? `Need ${plural(need, 'run')} from ${plural(left, 'ball')}` : `${s.runs} of ${t}`;
+      $('targetLine').textContent = `🎯 ${t}`;
+      const pct = Math.min(100, Math.round((s.runs / t) * 100));
+      $('bar').style.width = pct + '%';
+      $('barWrap').setAttribute('aria-valuenow', pct);
+    }
+
+    // Ball-by-ball chips, labelled by over
+    const chips = $('chips');
+    chips.innerHTML = '';
+    let legal = 0;
+    let group = null;
+    inn.balls.forEach((b, k) => {
+      if (!group) {
+        group = document.createElement('div');
+        group.className = 'over-group';
+        group.appendChild(overTag(Math.floor(legal / 6) + 1));
+        chips.appendChild(group);
+      }
+      const el = chip(b);
+      if (justAdded && k === inn.balls.length - 1) el.classList.add('pop');
+      group.appendChild(el);
+      if (LEGAL[b.kind] && ++legal % 6 === 0) group = null;
+    });
+    if (!inn.balls.length) chips.innerHTML = '<div class="empty"><span class="big-emoji" aria-hidden="true">🏏</span>Tap a button below to score the first ball.</div>';
+    const { current } = splitCurrentOver(inn.balls);
+    const overRuns = current.reduce((a, b) => a + b.runs, 0);
+    $('thisOverRuns').textContent = current.length ? `This over: ${plural(overRuns, 'run')}` : '';
+    const area = $('ballsArea');
+    area.scrollTop = area.scrollHeight;
+
+    // Keypad vs. status panel
+    $('padArea').classList.toggle('hidden', done);
+    $('undoBtn').disabled = !inn.balls.length && !inn.closed && state.innings.length === 1;
+    $('newInnBtn').disabled = i !== 0;
+    $('endInnWrap').classList.toggle('hidden', i !== 1);
+    $('endInnBtn').disabled = !inn.balls.length;
+    const status = $('statusCard');
+    status.classList.toggle('hidden', !done);
+    if (done) {
+      if (i === 0) {
+        const why = inn.closed ? 'Innings ended' : s.wkts >= MAX_WKTS ? 'All out!' : 'Innings over';
+        $('statusEmoji').textContent = '🔁';
+        $('statusTitle').textContent = `${why} ${s.runs}/${s.wkts}`;
+        $('statusText').textContent = `${state.teams[1]} need ${s.runs + 1} to win from ${plural(state.overs, 'over')}.`;
+        $('statusAction').textContent = 'New innings →';
+        $('statusAction').onclick = startSecondInnings;
+      } else {
+        const r = result();
+        $('statusEmoji').textContent = r.winner ? '🏆' : '🤝';
+        $('statusTitle').textContent = r.text;
+        $('statusText').textContent = r.sub;
+        $('statusAction').textContent = 'New match';
+        $('statusAction').onclick = newMatch;
+      }
+    }
+  }
+
+  function splitCurrentOver(balls) {
+    // Indexes where each over starts; if an over just finished, show that one.
+    const starts = [0];
+    let legal = 0;
+    balls.forEach((b, k) => { if (LEGAL[b.kind] && ++legal % 6 === 0) starts.push(k + 1); });
+    let start = starts[starts.length - 1];
+    if (start === balls.length && starts.length > 1) start = starts[starts.length - 2];
+    return { current: balls.slice(start) };
+  }
+
+  function overTag(n) {
+    const el = document.createElement('span');
+    el.className = 'over-tag';
+    el.textContent = `Ov ${n}`;
+    return el;
+  }
+
+  function chip(b) {
+    const { t, c, a } = label(b);
+    const el = document.createElement('span');
+    el.className = 'chip ' + c;
+    el.textContent = t;
+    el.setAttribute('role', 'img');
+    el.setAttribute('aria-label', a);
+    return el;
+  }
+
+  function fillSetup() {
+    const s = lastSetup || {};
+    $('oversIn').value = s.overs || 20;
+    const first = s.batFirst === 'Team B' ? 'Team B' : 'Team A';
+    document.querySelector(`input[name="batFirst"][value="${first}"]`).checked = true;
+  }
+
+  // ---------- Events ----------
+  const clampOvers = (v) => Math.max(1, Math.min(100, parseInt(v, 10) || 20));
+  $('oversDown').addEventListener('click', () => { $('oversIn').value = clampOvers($('oversIn').value) - 1 || 1; });
+  $('oversUp').addEventListener('click', () => { $('oversIn').value = Math.min(100, clampOvers($('oversIn').value) + 1); });
+  document.querySelector('.presets').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (b) $('oversIn').value = b.dataset.overs;
+  });
+
+  $('setupForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const overs = clampOvers($('oversIn').value);
+    const batFirst = document.querySelector('input[name="batFirst"]:checked').value;
+    const teams = batFirst === 'Team A' ? ['Team A', 'Team B'] : ['Team B', 'Team A'];
+    lastSetup = { overs, batFirst };
+    saveSetup(lastSetup);
+    state = { teams, overs, innings: [{ balls: [], closed: false }] };
+    save();
+    render();
+  });
+
+  document.querySelector('.keys').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn || btn.id === 'undoBtn' || btn.id === 'newInnBtn') return;
+    if (btn.dataset.run !== undefined) record({ kind: 'run', runs: +btn.dataset.run });
+    else if (btn.dataset.act === 'wicket') record({ kind: 'wicket', runs: 0 });
+    else pickRuns(btn.dataset.act);
+  });
+  $('undoBtn').addEventListener('click', undo);
+  $('newInnBtn').addEventListener('click', newInnings);
+  $('statusUndo').addEventListener('click', undo);
+  $('endInnBtn').addEventListener('click', endInnings);
+  $('newMatchBtn').addEventListener('click', newMatch);
+
+  document.addEventListener('keydown', (e) => {
+    if (!state || dlg.open || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target.matches('input, textarea')) return;
+    const k = e.key.toLowerCase();
+    if (k === 'u') return undo();
+    if (inningsDone(curIdx())) return;
+    if (/^[0-6]$/.test(k)) record({ kind: 'run', runs: +k });
+    else if (k === 'w') record({ kind: 'wicket', runs: 0 });
+    else if (k === 'd') pickRuns('wide');
+    else if (k === 'n') pickRuns('noball');
+    else if (k === 'b' || k === 'l') pickRuns('byes');
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
