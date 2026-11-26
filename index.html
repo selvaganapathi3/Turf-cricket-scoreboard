@@ -147,6 +147,11 @@ header h1 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.5px;
 .score.bump { animation: bump .35s ease-out; }
 @keyframes bump { 40% { transform: scale(1.08); } }
 .overs { margin-top: 6px; font-size: 14px; opacity: .9; font-variant-numeric: tabular-nums; }
+.overs-btn { display: inline-flex; align-items: center; gap: 6px; color: inherit; padding: 4px 10px 4px 0; min-height: 32px; border-radius: 10px; text-align: left; }
+.overs-btn .edit-ic { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,.22); font-size: 12px; }
+.overs-btn:disabled { opacity: .9; cursor: default; }
+.overs-btn:disabled .edit-ic { display: none; }
+.dlg-extra { margin-bottom: 16px; }
 .bat { font-size: 54px; line-height: 1; filter: drop-shadow(0 6px 10px rgba(0,0,0,.25)); animation: wobble 3s ease-in-out infinite; transform-origin: 70% 90%; }
 @keyframes wobble { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
 .rates { position: relative; display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
@@ -235,7 +240,15 @@ header h1 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.5px;
   transition: transform .15s ease;
 }
 .choice .avatar { font-size: 34px; line-height: 1; }
-.choice .nm { font-size: 18px; font-weight: 900; }
+.choice .nm { font-size: 17px; font-weight: 900; line-height: 1.15; text-align: center; max-width: 100%; overflow-wrap: anywhere; padding: 0 6px; }
+.choice label { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; overflow: hidden; text-transform: none; letter-spacing: 0; color: var(--text); }
+.choice label::after { content: ""; position: absolute; left: 0; bottom: 0; height: 4px; width: 0; background: rgba(255,255,255,.7); }
+.choice label.holding { transform: scale(.96); }
+.choice label.holding::after { width: 100%; transition: width .5s linear; }
+.name-input {
+  font: inherit; font-size: 20px; font-weight: 700; width: 100%; min-height: 52px; padding: 10px 14px;
+  border: 2px solid var(--input-border, var(--line)); border-radius: 14px; background: var(--soft); color: var(--text);
+}
 .choice input { position: absolute; opacity: 0; pointer-events: none; }
 .choice label:has(input:checked) { color: #fff; transform: translateY(-2px); }
 .choice label.a:has(input:checked) { background: linear-gradient(135deg, var(--hero-1), var(--hero-2)); box-shadow: 0 10px 24px -8px rgba(5,150,105,.6); }
@@ -248,8 +261,8 @@ header h1 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.5px;
   border: 0; border-radius: 16px; background: var(--soft); color: var(--text); -moz-appearance: textfield;
 }
 .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.presets { display: flex; gap: 6px; flex-wrap: wrap; }
-.presets button { padding: 6px 12px; border-radius: 999px; background: var(--soft); font-size: 13px; font-weight: 700; min-height: 34px; }
+.presets { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
+.presets button { padding: 6px 0; border-radius: 999px; background: var(--soft); font-size: 13px; font-weight: 700; min-height: 36px; }
 .start-btn { width: 100%; min-height: 58px; border-radius: 18px; color: #fff; font-weight: 900; font-size: 18px; letter-spacing: .3px; background: linear-gradient(135deg, var(--hero-1), var(--hero-2), var(--hero-3)); box-shadow: 0 14px 30px -10px rgba(79,70,229,.6); }
 .start-btn:active { transform: scale(.98); }
 
@@ -287,7 +300,6 @@ dialog p { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .res-back { color: #a5b4fc; } }
 :root[data-theme="dark"] .res-undo { color: #5eead4; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .res-undo { color: #5eead4; } }
-.res-credit { margin-top: 14px; font-size: 11px; color: var(--muted); }
 
 /* Celebration burst */
 .burst { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; pointer-events: none; }
@@ -308,6 +320,7 @@ dialog p { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
 .shake { animation: shake .4s; }
 @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
 #confetti { position: fixed; inset: 0; z-index: 49; pointer-events: none; width: 100%; height: 100%; }
+#confetti[popover] { margin: 0; padding: 0; border: 0; background: transparent; width: 100vw; height: 100vh; overflow: hidden; }
 
 /* ---------- Responsive ---------- */
 .score { font-size: clamp(52px, 17vw, 72px); }
@@ -485,26 +498,29 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
   <!-- Setup -->
   <section id="setupView" class="setup hidden" aria-labelledby="setupTitle">
     <div class="card glass">
-      <h2 id="setupTitle">Let's play Turf 🎾</h2>
+      <h2 id="setupTitle">Let's play Cricket 🎾</h2>
       <p class="lead">Pick who bats first and how long the game is.</p>
       <form id="setupForm">
         <fieldset class="field">
           <legend>Batting first</legend>
           <div class="choice">
-            <label class="a"><input type="radio" name="batFirst" value="Team A" checked><span class="avatar" aria-hidden="true">🦁</span><span class="nm">Team A</span></label>
-            <label class="b"><input type="radio" name="batFirst" value="Team B"><span class="avatar" aria-hidden="true">🐯</span><span class="nm">Team B</span></label>
+            <label class="a"><input type="radio" name="batFirst" value="A" checked><span class="avatar" aria-hidden="true">🦁</span><span class="nm">Lions</span></label>
+            <label class="b"><input type="radio" name="batFirst" value="B"><span class="avatar" aria-hidden="true">🐯</span><span class="nm">Tigers</span></label>
           </div>
         </fieldset>
         <div class="field">
           <label for="oversIn">Overs per innings</label>
           <div class="stepper">
             <button type="button" id="oversDown" aria-label="Fewer overs">−</button>
-            <input id="oversIn" type="number" inputmode="numeric" min="1" max="100" value="20" required>
+            <input id="oversIn" type="number" inputmode="numeric" min="1" max="100" value="5" required>
             <button type="button" id="oversUp" aria-label="More overs">+</button>
           </div>
           <div class="presets" role="group" aria-label="Quick picks">
+            <button type="button" data-overs="4">4</button>
             <button type="button" data-overs="5">5</button>
             <button type="button" data-overs="6">6</button>
+            <button type="button" data-overs="7">7</button>
+            <button type="button" data-overs="8">8</button>
             <button type="button" data-overs="10">10</button>
             <button type="button" data-overs="20">T20</button>
             <button type="button" data-overs="50">ODI</button>
@@ -526,7 +542,7 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
         <div class="hero-main">
           <div>
             <div class="score" id="scoreText">0/0</div>
-            <div class="overs"><span id="oversText">0.0</span> / <span id="oversMax">20</span> overs</div>
+            <button type="button" class="overs overs-btn" id="oversEdit" aria-label="Change overs per innings"><span id="oversText">0.0</span> / <span id="oversMax">5</span> overs<span class="edit-ic" aria-hidden="true">✎</span></button>
           </div>
           <div class="bat" id="batIcon" aria-hidden="true">🦁</div>
         </div>
@@ -595,12 +611,12 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
     <button type="button" class="res-undo" id="resUndo">Undo last ball</button>
     <button type="button" class="res-new" id="resNew">New Match</button>
   </div>
-  <p class="res-credit hidden" id="resCredit">Animated emoji: Google Noto Emoji, CC BY 4.0</p>
 </dialog>
 
 <dialog id="dlg">
   <h3 id="dlgTitle"></h3>
   <p id="dlgText"></p>
+  <div id="dlgExtra" class="dlg-extra hidden"></div>
   <div class="dlg-options" id="dlgOptions"></div>
   <div class="dlg-actions" id="dlgActions"></div>
 </dialog>
@@ -609,21 +625,40 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
 (() => {
   const KEY = 'cricket-scorer:v1';
   const MAX_WKTS = 10; // 11-a-side: all out at 10 wickets
+  const DEFAULT_OVERS = 5; // used until a match has been played; then the last match's overs
+  const DEFAULT_NAMES = { A: 'Lions', B: 'Tigers' }; // A = 🦁 side, B = 🐯 side
   const LEGAL = { run: true, wicket: true, bye: true, legbye: true, wide: false, noball: false };
   const $ = (id) => document.getElementById(id);
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   // ---------- State ----------
-  // state = { teams:[battingFirst, battingSecond], overs, innings:[{ balls:[{kind,runs}], closed:bool }] }
+  // state = { teams:[battingFirst, battingSecond] (display names), sides:['A'|'B', ...] (A = lion, B = tiger),
+  //           overs, innings:[{ balls:[{kind,runs}], closed:bool }] }
   let state = load();
   let lastSetup = loadSetup();
+  let names = loadNames(); // { A: 'Lions', B: 'Tigers' } by default, renamed by holding a team on setup
   let justAdded = false;
 
   function load() {
     try {
       const s = JSON.parse(localStorage.getItem(KEY));
-      return s && s.teams && s.teams.every((t) => t === 'Team A' || t === 'Team B') ? s : null;
+      if (!s || !Array.isArray(s.teams) || !Array.isArray(s.innings)) return null;
+      if (!s.sides) s.sides = s.teams.map((t) => (t === 'Team B' ? 'B' : 'A')); // matches saved before renaming existed
+      return s;
     } catch (e) { return null; }
+  }
+  function loadNames() {
+    const fallback = { ...DEFAULT_NAMES };
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY + ':names')) || {};
+      // The old defaults "Team A" / "Team B" were never chosen by the user, so switch them to the new ones.
+      if (saved.A === 'Team A') delete saved.A;
+      if (saved.B === 'Team B') delete saved.B;
+      return { ...fallback, ...saved };
+    } catch (e) { return fallback; }
+  }
+  function saveNames() {
+    try { localStorage.setItem(KEY + ':names', JSON.stringify(names)); } catch (e) {}
   }
   function save() {
     try {
@@ -686,20 +721,19 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
 
   const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
-  // { winner, margin ("won by 6 runs"), text (full line), sub (the losing side's score) }
+  // { winner (name), side ('A' lion / 'B' tiger), margin ("won by 6 runs"), text (full line), sub }
   function result() {
     const t = target();
-    const s1 = stats(state.innings[0]);
     const s2 = stats(state.innings[1]);
     const [a, b] = state.teams;
     if (s2.runs >= t) {
       // Chase won: show the chasing score and overs taken, not wickets in hand.
       const margin = 'chased it down!';
-      return { winner: b, margin, text: `${b} ${margin}`, sub: `${s2.runs}/${s2.wkts} in ${fmtOvers(s2.legal)} overs` };
+      return { winner: b, side: state.sides[1], margin, text: `${b} ${margin}`, sub: `${s2.runs}/${s2.wkts} in ${fmtOvers(s2.legal)} overs` };
     }
-    if (s2.runs === t - 1) return { winner: null, margin: 'Match tied', text: 'Match tied', sub: `Both teams scored ${s2.runs}` };
+    if (s2.runs === t - 1) return { winner: null, side: null, margin: 'Match tied', text: 'Match tied', sub: `Both teams scored ${s2.runs}` };
     const margin = `won by ${plural(t - 1 - s2.runs, 'run')}`;
-    return { winner: a, margin, text: `${a} ${margin}`, sub: `${b} scored ${s2.runs}/${s2.wkts}` };
+    return { winner: a, side: state.sides[0], margin, text: `${a} ${margin}`, sub: `${b} scored ${s2.runs}/${s2.wkts}` };
   }
 
   const fmtOvers = (legal) => Math.floor(legal / 6) + '.' + (legal % 6);
@@ -738,6 +772,7 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
   let pieces = [], rafId = null;
   function confetti(amount = 90) {
     if (reduceMotion.matches) return;
+    liftConfetti();
     const dpr = window.devicePixelRatio || 1;
     canvas.width = innerWidth * dpr;
     canvas.height = innerHeight * dpr;
@@ -767,7 +802,22 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
       ctx.restore();
     });
     pieces = pieces.filter((p) => p.life < 110 && p.y < innerHeight + 40);
-    rafId = pieces.length ? requestAnimationFrame(tick) : (ctx.clearRect(0, 0, innerWidth, innerHeight), null);
+    if (pieces.length) { rafId = requestAnimationFrame(tick); return; }
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    rafId = null;
+    if (canPopover && canvas.matches(':popover-open')) canvas.hidePopover();
+  }
+
+  // Popups (dialogs) sit in the browser's top layer, above any z-index. Showing the confetti
+  // canvas as a popover puts it in the top layer too, above whatever popup opened before it.
+  const canPopover = typeof canvas.showPopover === 'function';
+  if (canPopover) canvas.setAttribute('popover', 'manual');
+  function liftConfetti() {
+    if (!canPopover) return;
+    try {
+      if (canvas.matches(':popover-open')) canvas.hidePopover();
+      canvas.showPopover();
+    } catch (e) { /* fall back to drawing under the popup */ }
   }
 
   function celebrate(ball) {
@@ -839,10 +889,14 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
 
   // ---------- Dialog helpers ----------
   const dlg = $('dlg');
-  function openDlg({ title, text = '', options = [], actions = [] }) {
+  function openDlg({ title, text = '', extra = null, options = [], actions = [] }) {
     $('dlgTitle').textContent = title;
     $('dlgText').innerHTML = text;
     $('dlgText').classList.toggle('hidden', !text);
+    const extraBox = $('dlgExtra');
+    extraBox.innerHTML = '';
+    if (extra) extraBox.appendChild(extra);
+    extraBox.classList.toggle('hidden', !extra);
     const opts = $('dlgOptions');
     opts.innerHTML = '';
     opts.classList.toggle('hidden', !options.length);
@@ -872,8 +926,42 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
       acts.appendChild(btn);
     });
     dlg.showModal();
-    const first = opts.querySelector('button') || acts.querySelector('button:last-child');
+    const first = extraBox.querySelector('input') || opts.querySelector('button') || acts.querySelector('button:last-child');
     if (first) first.focus();
+  }
+
+  // Change the overs for this match (1st innings only, so the chase stays fair).
+  function editOvers() {
+    if (!state || state.innings.length !== 1) return;
+    const bowled = stats(cur()).legal;
+    const min = Math.max(1, Math.ceil(bowled / 6));
+    const wrap = document.createElement('div');
+    wrap.className = 'stepper';
+    wrap.innerHTML =
+      '<button type="button" aria-label="Fewer overs">−</button>' +
+      `<input type="number" inputmode="numeric" min="${min}" max="100" value="${state.overs}" aria-label="Overs per innings">` +
+      '<button type="button" aria-label="More overs">+</button>';
+    const [down, input, up] = wrap.children;
+    const clamp = (v) => Math.max(min, Math.min(100, parseInt(v, 10) || state.overs));
+    down.onclick = () => { input.value = Math.max(min, clamp(input.value) - 1); };
+    up.onclick = () => { input.value = Math.min(100, clamp(input.value) + 1); };
+    openDlg({
+      title: 'Overs per innings',
+      text: bowled ? escapeHtml(`${fmtOvers(bowled)} overs bowled so far, so the minimum is ${min}.`) : 'Set how many overs each team gets.',
+      extra: wrap,
+      actions: [
+        { label: 'Cancel' },
+        { label: 'Save', cls: 'primary', onClick: () => {
+          const overs = clamp(input.value);
+          if (overs === state.overs) return;
+          state.overs = overs;
+          lastSetup = { ...(lastSetup || {}), overs }; // carry forward to the next match
+          saveSetup(lastSetup);
+          save();
+          render();
+        } },
+      ],
+    });
   }
   dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); }); // click backdrop closes
 
@@ -908,23 +996,23 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
     openDlg({ ...cfg, actions: [{ label: 'Cancel' }] });
   }
 
-  // Winner artwork, tried in order: your own files next to index.html, then Google's
-  // animated Noto emoji (CC BY 4.0), then the plain emoji if nothing loads.
+  // Winner artwork per side (A = lion, B = tiger), tried in order: your own GIFs next to
+  // index.html, then Google's animated Noto emoji, then the plain emoji if nothing loads.
+  // Noto Emoji animations by Google, licensed CC BY 4.0 (https://googlefonts.github.io/noto-emoji-animation/).
   const NOTO = 'https://fonts.gstatic.com/s/e/notoemoji/latest/';
   const WIN_ART = {
-    'Team A': { sources: ['lion.gif', NOTO + '1f981/512.webp'], emoji: '🦁', grad: 'a' },
-    'Team B': { sources: ['tiger.gif', NOTO + '1f405/512.webp'], emoji: '🐯', grad: 'b' },
+    // GitHub Pages is case-sensitive, so both spellings of the file name are tried.
+    A: { sources: ['Lion.gif', 'lion.gif', NOTO + '1f981/512.webp'], emoji: '🦁', alt: 'Lion celebrating', grad: 'a' },
+    B: { sources: ['Tiger.gif', 'tiger.gif', NOTO + '1f405/512.webp'], emoji: '🐯', alt: 'Tiger celebrating', grad: 'b' },
   };
   function preloadWinArt() {
     Object.values(WIN_ART).forEach((art) => { const img = new Image(); img.src = art.sources[0]; });
   }
-  function setWinArt(team) {
+  function setWinArt(side) {
     const img = $('resImg');
     const emoji = $('resEmoji');
-    const art = WIN_ART[team];
+    const art = WIN_ART[side];
     img.onerror = null;
-    $('resCredit').classList.add('hidden');
-    img.onload = () => $('resCredit').classList.toggle('hidden', !img.src.startsWith(NOTO));
     if (!art) { img.classList.add('hidden'); emoji.classList.remove('hidden'); emoji.textContent = '🤝'; return; }
     let i = 0;
     const tryNext = () => {
@@ -932,7 +1020,7 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
       img.src = art.sources[i++];
     };
     img.onerror = tryNext;
-    img.alt = team === 'Team A' ? 'Lion celebrating' : 'Tiger celebrating';
+    img.alt = art.alt;
     img.classList.remove('hidden');
     emoji.classList.add('hidden');
     tryNext();
@@ -941,10 +1029,10 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
   const resultDlg = $('resultDlg');
   function showResult() {
     const r = result();
-    setWinArt(r.winner);
+    setWinArt(r.side);
     const team = $('resTeam');
     team.textContent = r.winner || '';
-    team.className = 'res-team' + (r.winner ? ' ' + WIN_ART[r.winner].grad : '');
+    team.className = 'res-team' + (r.side ? ' ' + WIN_ART[r.side].grad : '');
     $('resMargin').textContent = r.margin;
     $('resSub').textContent = r.sub;
     resultDlg.showModal();
@@ -984,7 +1072,7 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
     $('crr').textContent = rate(s.runs, s.legal);
 
     $('exTotal').textContent = s.extras;
-    $('batIcon').textContent = state.teams[i] === 'Team A' ? '🦁' : '🐯';
+    $('batIcon').textContent = state.sides[i] === 'A' ? '🦁' : '🐯';
 
     const need = i === 1 ? t - s.runs : 0;
     $('rrrRow').classList.toggle('hidden', i !== 1);
@@ -1029,6 +1117,7 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
     $('padArea').classList.toggle('hidden', done);
     $('undoBtn').disabled = !inn.balls.length && !inn.closed && state.innings.length === 1;
     $('newInnBtn').disabled = i !== 0;
+    $('oversEdit').disabled = i !== 0; // overs can only change in the 1st innings
     const status = $('statusCard');
     status.classList.toggle('hidden', !done);
     if (done) {
@@ -1079,13 +1168,67 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
 
   function fillSetup() {
     const s = lastSetup || {};
-    $('oversIn').value = s.overs || 20;
-    const first = s.batFirst === 'Team B' ? 'Team B' : 'Team A';
+    $('oversIn').value = s.overs || DEFAULT_OVERS; // last match's overs carry forward
+    const first = s.batFirst === 'B' || s.batFirst === 'Team B' ? 'B' : 'A';
     document.querySelector(`input[name="batFirst"][value="${first}"]`).checked = true;
+    paintTeamNames();
+  }
+  function paintTeamNames() {
+    ['A', 'B'].forEach((side) => {
+      const label = document.querySelector(`.choice label.${side.toLowerCase()}`);
+      label.querySelector('.nm').textContent = names[side];
+      label.setAttribute('aria-label', `${names[side]}. Press and hold to rename`);
+    });
   }
 
+  // Hold a team card on the setup screen to rename it. Names are remembered for later matches.
+  const MAX_NAME = 16;
+  function renameTeam(side) {
+    const other = names[side === 'A' ? 'B' : 'A'];
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'name-input';
+    input.maxLength = MAX_NAME;
+    input.value = names[side];
+    input.setAttribute('aria-label', 'Team name');
+    input.autocomplete = 'off';
+    const saveName = () => {
+      let name = input.value.replace(/\s+/g, ' ').trim().slice(0, MAX_NAME);
+      if (!name) name = DEFAULT_NAMES[side];
+      if (name.toLowerCase() === other.toLowerCase()) name = (name + ' 2').slice(0, MAX_NAME);
+      names[side] = name;
+      saveNames();
+      paintTeamNames();
+    };
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); dlg.close(); saveName(); } });
+    openDlg({
+      title: `Rename ${side === 'A' ? '🦁' : '🐯'} team`,
+      text: `Up to ${MAX_NAME} characters. This name is kept for future matches.`,
+      extra: input,
+      actions: [{ label: 'Cancel' }, { label: 'Save', cls: 'primary', onClick: saveName }],
+    });
+    input.select();
+  }
+  document.querySelectorAll('.choice label').forEach((label) => {
+    const side = label.classList.contains('a') ? 'A' : 'B';
+    let timer = null;
+    const cancel = () => { clearTimeout(timer); timer = null; label.classList.remove('holding'); };
+    label.addEventListener('pointerdown', (e) => {
+      if (e.button > 0) return;
+      label.classList.add('holding');
+      timer = setTimeout(() => {
+        cancel();
+        if (navigator.vibrate) navigator.vibrate(15);
+        label.querySelector('input').checked = true; // holding a team also picks it
+        renameTeam(side);
+      }, 500);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => label.addEventListener(ev, cancel));
+    label.addEventListener('contextmenu', (e) => e.preventDefault());
+  });
+
   // ---------- Events ----------
-  const clampOvers = (v) => Math.max(1, Math.min(100, parseInt(v, 10) || 20));
+  const clampOvers = (v) => Math.max(1, Math.min(100, parseInt(v, 10) || DEFAULT_OVERS));
   $('oversDown').addEventListener('click', () => { $('oversIn').value = clampOvers($('oversIn').value) - 1 || 1; });
   $('oversUp').addEventListener('click', () => { $('oversIn').value = Math.min(100, clampOvers($('oversIn').value) + 1); });
   document.querySelector('.presets').addEventListener('click', (e) => {
@@ -1096,11 +1239,12 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
   $('setupForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const overs = clampOvers($('oversIn').value);
-    const batFirst = document.querySelector('input[name="batFirst"]:checked').value;
-    const teams = batFirst === 'Team A' ? ['Team A', 'Team B'] : ['Team B', 'Team A'];
+    const batFirst = document.querySelector('input[name="batFirst"]:checked').value; // 'A' or 'B'
+    const sides = batFirst === 'A' ? ['A', 'B'] : ['B', 'A'];
+    const teams = sides.map((side) => names[side]);
     lastSetup = { overs, batFirst };
     saveSetup(lastSetup);
-    state = { teams, overs, innings: [{ balls: [], closed: false }] };
+    state = { teams, sides, overs, innings: [{ balls: [], closed: false }] };
     save();
     render();
   });
@@ -1146,6 +1290,7 @@ header { padding-top: calc(14px + env(safe-area-inset-top)); padding-left: calc(
   });
   $('undoBtn').addEventListener('click', undo);
   $('newInnBtn').addEventListener('click', newInnings);
+  $('oversEdit').addEventListener('click', editOvers);
   $('statusUndo').addEventListener('click', undo);
   $('newMatchBtn').addEventListener('click', newMatch);
 
